@@ -16,9 +16,10 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <log4j.version>1.2.17</log4j.version>
-        <mrunit.version>1.1.0</mrunit.version>
+        <mrunit.version>0.20.2-737</mrunit.version>
         <assertj.version>3.6.1</assertj.version>
-        <hadoop.version>2.6.0-mr1-cdh5.9.1</hadoop.version>
+        <hadoop-cdh.version>2.6.0-mr1-cdh5.9.1</hadoop-cdh.version>
+        <hadoop.version>3.0.0-alpha1</hadoop.version>
     </properties>
 
     <dependencies>
@@ -29,8 +30,8 @@
         </dependency>
 
         <!--<dependency>
-            <groupId>org.apache.mrunit</groupId>
-            <artifactId>mrunit</artifactId>
+            <groupId>com.cloudera.hadoop</groupId>
+            <artifactId>hadoop-mrunit</artifactId>
             <version>${mrunit.version}</version>
         </dependency>-->
 
@@ -43,6 +44,36 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-core</artifactId>
+            <version>${hadoop-cdh.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-mapreduce-client-core</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-annotations</artifactId>
             <version>${hadoop.version}</version>
         </dependency>
 
