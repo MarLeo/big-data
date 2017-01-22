@@ -133,5 +133,8 @@ buildNumber.properties
 .idea/
 big-data.iml
 
+#Others
+id_rsa_user04
+
 
 

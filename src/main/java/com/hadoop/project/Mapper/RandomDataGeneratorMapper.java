@@ -1,10 +1,13 @@
 package com.hadoop.project.Mapper;
 
 import com.hadoop.project.Counters.Counters;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -524,26 +527,12 @@ public class RandomDataGeneratorMapper extends Mapper<Text, Text, Text, Text> {
     private /*static final*/ int wordsInKeyRange = 10 - minWordsInKey;
     private /*static final*/ int minWordsInValue = 10;
     private /*static final*/ int wordsInValueRange = 100 - minWordsInValue;
-    private Random random;
+    private Random random = new Random();
 
 
-    /**
-     * Save the configuration value that we need to write the data
-     */
 
 
-    public RandomDataGeneratorMapper() {
-        random = new Random();
-    }
-
-    /**
-     * Given an output filename, write a bunch of random records to it.
-     *
-     * @param key
-     * @param value
-     * @param context
-     */
-    public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
+   /* public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
         int itemCount = 0;
         while (numBytesToWrite > 0) {
             // Generate the key/value
@@ -553,9 +542,9 @@ public class RandomDataGeneratorMapper extends Mapper<Text, Text, Text, Text> {
             Text valueWords = generateSentence(value_word);
 
             // Write the sentence
-            context.write(keyWords/*new Text()*/, valueWords);
+           // context.write(keyWords, valueWords);
 
-            numBytesToWrite -= (valueWords.getLength());
+            /*numBytesToWrite -= (valueWords.getLength());
 
             // Update counters, progress etc.
             context.getCounter(Counters.BYTES_WRITTEN).increment(keyWords.getLength() + valueWords.getLength());
@@ -566,6 +555,41 @@ public class RandomDataGeneratorMapper extends Mapper<Text, Text, Text, Text> {
 
         }
 
+    }*/
+
+    /**
+     * Given an output filename, write a bunch of random records to it.
+     *
+     * @param key
+     * @param value
+     * @param context
+     */
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        List<String> words = listOfWords(value);
+        int itemCount = 0;
+        while (numBytesToWrite > 0) {
+            //Text valueWords = new Text(words.get(random.nextInt(words.size())));
+            int key_word = minWordsInKey + (wordsInKeyRange != 0 ? random.nextInt(wordsInKeyRange) : 0);
+            int value_word = minWordsInValue + (wordsInValueRange != 0 ? random.nextInt(wordsInValueRange) : 0);
+            Text keyWords = generateSentence(key_word, words);
+            Text valueWords = generateSentence(value_word, words);
+            context.write(new Text(), valueWords);
+            numBytesToWrite -= (valueWords.getLength());
+            // Update counters, progress etc.
+            context.getCounter(Counters.BYTES_WRITTEN).increment(valueWords.getLength());
+            context.getCounter(Counters.RECORDS_WRITTEN).increment(1);
+            if (++itemCount % 200 == 0) {
+                context.setStatus(String.format("Wrote record %d . %d bytes left", itemCount, numBytesToWrite));
+            }
+        }
+    }
+
+    private List<String> listOfWords(Text value) {
+        List<String> strings = new ArrayList<String>();
+        //for(String line : value.toString()) {
+        strings.add(value.toString());
+        //}
+        return strings;
     }
 
     /**
@@ -573,16 +597,17 @@ public class RandomDataGeneratorMapper extends Mapper<Text, Text, Text, Text> {
      * @return a new sentence
      */
 
-    private Text generateSentence(int wordsNumbers) {
+    private Text generateSentence(int wordsNumbers, List<String> list) {
         StringBuffer sentence = new StringBuffer();
         String space = " ";
 
         for (int i = 0; i < wordsNumbers; i++) {
-            sentence.append(words[random.nextInt(words.length)]);
+            sentence.append(list.get(random.nextInt(list.size())));
             sentence.append(space);
         }
         return new Text(sentence.toString());
     }
+
 }
 
 
