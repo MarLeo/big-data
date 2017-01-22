@@ -40,9 +40,15 @@ public class Driver extends Configured implements Tool {
     }
 
     public int run(String[] args) throws Exception {
-        if (args.length == 0) {
+        if (args.length != 0) {
             return printUsage();
         }
+
+        // Input Path
+        Path inputPath = new Path(args[0]);
+
+        // Output Path
+        Path outputDir = new Path(args[1]);
 
         // Create configuration
         Configuration conf = getConf();
@@ -60,17 +66,17 @@ public class Driver extends Configured implements Tool {
         job.setOutputValueClass(Text.class);
 
         // Input
-        FileInputFormat.setInputPaths(job, new Path(args[0]));
+        FileInputFormat.setInputPaths(job, inputPath);
         job.setInputFormatClass(TextInputFormat.class);
 
         // Output
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        FileOutputFormat.setOutputPath(job, outputDir);
         job.setOutputFormatClass(TextOutputFormat.class);
 
         // Delete output if exists
         FileSystem hdfs = FileSystem.get(conf);
-        if (hdfs.exists(new Path(args[1]))) {
-            hdfs.delete(new Path(args[1]), true);
+        if (hdfs.exists(outputDir)) {
+            hdfs.delete(outputDir, true);
         }
 
         // Execute job
