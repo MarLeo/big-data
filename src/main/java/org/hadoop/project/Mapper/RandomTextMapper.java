@@ -42,12 +42,9 @@ public class RandomTextMapper extends MapReduceBase implements Mapper<Text, Text
             numBytesToWrite -= (keyWords.getLength () + valueWords.getLength ());
 
             // Update counters, progress etc.
-            //context.getCounter ( Counters.BYTES_WRITTEN).increment ( valueWords.getLength () );
-            //context.getCounter ( Counters.RECORDS_WRITTEN ).increment ( 1 );
             reporter.incrCounter ( Counters.BYTES_WRITTEN, (keyWords.getLength () + valueWords.getLength ()) );
             reporter.incrCounter ( Counters.RECORDS_WRITTEN, 1 );
             if (++items % 200 == 0) {
-                //context.setStatus ( String.format ( "Wrote %d . %d bytes left", items, numBytesToWrite ) );
                 reporter.setStatus ( String.format ( "Wrote %d . %d bytes left", items, numBytesToWrite ) );
             }
         }
