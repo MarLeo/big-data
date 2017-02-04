@@ -1,4 +1,4 @@
-package com.hadoop.project;
+package org.hadoop.project;
 
 /**
  * Created by marti on 22/01/2017.

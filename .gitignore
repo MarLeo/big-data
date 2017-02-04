@@ -138,3 +138,8 @@ id_rsa_user04
 
 
 
+!/src/main/resources/generatefile.txt
+/src/main/resources/wordlist.txt
+/src/main/resources/generatefile.txt
+/src/main/java/org/hadoop/project/RandomTextWriter.java
+/src/main/java/org/hadoop/project/RandomWriter.java

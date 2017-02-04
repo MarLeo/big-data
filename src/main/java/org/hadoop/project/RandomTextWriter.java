@@ -1,24 +1,281 @@
-package com.hadoop.project.Mapper;
+package org.hadoop.project;
 
-import com.hadoop.project.Counters.Counters;
-import org.apache.hadoop.io.LongWritable;
+/**
+ * Created by marti on 04/02/2017.
+ * <p>
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
 /**
- * Created by marti on 22/01/2017.
+ * This program uses map/reduce to just run a distributed job where there is
+ * no interaction between the tasks and each task writes a large unsorted
+ * random sequence of words.
+ * In order for this program to generate data for terasort with a 5-10 words
+ * per key and 20-100 words per value, have the following config:
+ * <xmp>
+ * <?xml version="1.0"?>
+ * <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+ * <configuration>
+ *   <property>
+ *     <name>test.randomtextwrite.min_words_key</name>
+ *     <value>5</value>
+ *   </property>
+ *   <property>
+ *     <name>test.randomtextwrite.max_words_key</name>
+ *     <value>10</value>
+ *   </property>
+ *   <property>
+ *     <name>test.randomtextwrite.min_words_value</name>
+ *     <value>20</value>
+ *   </property>
+ *   <property>
+ *     <name>test.randomtextwrite.max_words_value</name>
+ *     <value>10</value>
+ *   </property>
+ *   <property>
+ *     <name>test.randomtextwrite.total_bytes</name>
+ *     <value>1099511627776</value>
+ *   </property>
+ * </configuration></xmp>
  *
- * random text generator mapper
+ * Equivalently, {@link RandomTextWriter} also supports all the above options
+ * and ones supported by {@link Tool} via the command-line.
+ *
+ * To run: bin/hadoop jar hadoop-${version}-examples.jar randomtextwriter
+ *            [-outFormat <i>output format class</i>] <i>output</i>
  */
-public class RandomDataGeneratorMapper extends Mapper<Text, Text, Text, Text> {
+public class RandomTextWriter extends Configured implements Tool {
+
+    static int printUsage() {
+        System.out.println ( "randomtextwriter " +
+                "[-outFormat <output format class>] " +
+                "<output>" );
+        ToolRunner.printGenericCommandUsage ( System.out );
+        return -1;
+    }
 
     /**
-     * A random list of 100 words
+     * User counters
+     */
+    enum Counters {
+        RECORDS_WRITTEN, BYTES_WRITTEN
+    }
+
+    static class Map extends MapReduceBase
+            implements Mapper<Text, Text, Text, Text> {
+
+        private long numBytesToWrite;
+        private int minWordsInKey;
+        private int wordsInKeyRange;
+        private int minWordsInValue;
+        private int wordsInValueRange;
+        private Random random = new Random ();
+
+        /**
+         * Save the configuration value that we need to write the data.
+         */
+        public void configure(JobConf job) {
+            numBytesToWrite = job.getLong ( "test.randomtextwrite.bytes_per_map",
+                    1024 );
+            minWordsInKey =
+                    job.getInt ( "test.randomtextwrite.min_words_key", 5 );
+            wordsInKeyRange =
+                    (job.getInt ( "test.randomtextwrite.max_words_key", 10 ) -
+                            minWordsInKey);
+            minWordsInValue =
+                    job.getInt ( "test.randomtextwrite.min_words_value", 10 );
+            wordsInValueRange =
+                    (job.getInt ( "test.randomtextwrite.max_words_value", 100 ) -
+                            minWordsInValue);
+        }
+
+        /**
+         * Given an output filename, write a bunch of random records to it.
+         */
+        public void map(Text key, Text value,
+                        OutputCollector<Text, Text> output,
+                        Reporter reporter) throws IOException {
+            int itemCount = 0;
+            while (numBytesToWrite > 0) {
+                // Generate the key/value
+                int noWordsKey = minWordsInKey +
+                        (wordsInKeyRange != 0 ? random.nextInt ( wordsInKeyRange ) : 0);
+                int noWordsValue = minWordsInValue +
+                        (wordsInValueRange != 0 ? random.nextInt ( wordsInValueRange ) : 0);
+                Text keyWords = generateSentence ( noWordsKey );
+                Text valueWords = generateSentence ( noWordsValue );
+
+                // Write the sentence
+                output.collect ( keyWords, valueWords );
+
+                numBytesToWrite -= (keyWords.getLength () + valueWords.getLength ());
+
+                // Update counters, progress etc.
+                reporter.incrCounter ( Counters.BYTES_WRITTEN,
+                        (keyWords.getLength () + valueWords.getLength ()) );
+                reporter.incrCounter ( Counters.RECORDS_WRITTEN, 1 );
+                if (++itemCount % 200 == 0) {
+                    reporter.setStatus ( "wrote record " + itemCount + ". " +
+                            numBytesToWrite + " bytes left." );
+                }
+            }
+            reporter.setStatus ( "done with " + itemCount + " records." );
+        }
+
+        private Text generateSentence(int noWords) {
+            StringBuffer sentence = new StringBuffer ();
+            String space = " ";
+            for (int i = 0; i < noWords; ++i) {
+                sentence.append ( words[random.nextInt ( words.length )] );
+                sentence.append ( space );
+            }
+            return new Text ( sentence.toString () );
+        }
+    }
+
+    /**
+     * This is the main routine for launching a distributed random write job.
+     * It runs 10 maps/node and each node writes 1 gig of data to a DFS file.
+     * The reduce doesn't do anything.
+     *
+     * @throws IOException
+     */
+    public int run(String[] args) throws Exception {
+        if (args.length == 0) {
+            return printUsage ();
+        }
+
+        JobConf job = new JobConf ( getConf () );
+
+        job.setJarByClass ( RandomTextWriter.class );
+        job.setJobName ( "random-text-writer" );
+
+        job.setOutputKeyClass ( Text.class );
+        job.setOutputValueClass ( Text.class );
+
+        job.setInputFormat ( RandomWriter.RandomInputFormat.class );
+        job.setMapperClass ( Map.class );
+
+        JobClient client = new JobClient ( job );
+        ClusterStatus cluster = client.getClusterStatus ();
+        int numMapsPerHost = job.getInt ( "test.randomtextwrite.maps_per_host", 100 );
+        long numBytesToWritePerMap = job.getLong ( "test.randomtextwrite.bytes_per_map",
+                1024 );
+        if (numBytesToWritePerMap == 0) {
+            System.err.println ( "Cannot have test.randomtextwrite.bytes_per_map set to 0" );
+            return -2;
+        }
+        long totalBytesToWrite = job.getLong ( "test.randomtextwrite.total_bytes",
+                numMapsPerHost * numBytesToWritePerMap * cluster.getTaskTrackers () );
+        //int numMaps = (int) (totalBytesToWrite / numBytesToWritePerMap);
+        /*if (numMaps == 0 && totalBytesToWrite > 0) {
+            numMaps = 1;
+            job.setLong("test.randomtextwrite.bytes_per_map", totalBytesToWrite);
+        }
+        */
+
+        Class<? extends OutputFormat> outputFormatClass =
+                SequenceFileOutputFormat.class;
+        List<String> otherArgs = new ArrayList<String> ();
+        for (int i = 0; i < args.length; ++i) {
+            try {
+                if ("-outFormat".equals ( args[i] )) {
+                    outputFormatClass =
+                            Class.forName ( args[++i] ).asSubclass ( OutputFormat.class );
+                } else {
+                    otherArgs.add ( args[i] );
+                }
+            } catch (ArrayIndexOutOfBoundsException except) {
+                System.out.println ( "ERROR: Required parameter missing from " +
+                        args[i - 1] );
+                return printUsage (); // exits
+            }
+        }
+
+        job.setOutputFormat ( outputFormatClass );
+        FileOutputFormat.setOutputPath ( job, new Path ( otherArgs.get ( 0 ) ) );
+
+        int numMaps = 10;
+
+        job.setNumMapTasks ( numMaps );
+        System.out.println ( "Running " + numMaps + " maps." );
+
+        // reducer NONE
+        job.setNumReduceTasks ( 0 );
+
+        // Delete output if exists
+        FileSystem hdfs = FileSystem.get ( getConf () );
+        if (hdfs.exists ( new Path ( otherArgs.get ( 0 ) ) )) {
+            hdfs.delete ( new Path ( otherArgs.get ( 0 ) ), true );
+        }
+
+        Date startTime = new Date ();
+        System.out.println ( "Job started: " + startTime );
+        JobClient.runJob ( job );
+        Date endTime = new Date ();
+        System.out.println ( "Job ended: " + endTime );
+        System.out.println ( "The job took " +
+                (endTime.getTime () - startTime.getTime ()) / 1000 +
+                " seconds." );
+
+        return 0;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int res = ToolRunner.run ( new Configuration (), new RandomTextWriter (), args );
+        System.exit ( res );
+    }
+
+    /**
+     * A random list of 100 words from /usr/share/dict/words
      */
     private static String[] words = {
             "diurnalness", "Homoiousian",
@@ -522,98 +779,4 @@ public class RandomDataGeneratorMapper extends Mapper<Text, Text, Text, Text> {
             "unpatched", "hypochondriacism",
             "critically", "cheesecutter",
     };
-    private /*static final*/ long numBytesToWrite = (long) (300 * Math.pow(1024, 2));
-    private /*static final*/ int minWordsInKey = 5;
-    private /*static final*/ int wordsInKeyRange = 10 - minWordsInKey;
-    private /*static final*/ int minWordsInValue = 10;
-    private /*static final*/ int wordsInValueRange = 100 - minWordsInValue;
-    private Random random = new Random();
-
-
-
-
-   /* public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
-        int itemCount = 0;
-        while (numBytesToWrite > 0) {
-            // Generate the key/value
-            int key_word = minWordsInKey + (wordsInKeyRange != 0 ? random.nextInt(wordsInKeyRange) : 0);
-            int value_word = minWordsInValue + (wordsInValueRange != 0 ? random.nextInt(wordsInValueRange) : 0);
-            Text keyWords = generateSentence(key_word);
-            Text valueWords = generateSentence(value_word);
-
-            // Write the sentence
-           // context.write(keyWords, valueWords);
-
-            /*numBytesToWrite -= (valueWords.getLength());
-
-            // Update counters, progress etc.
-            context.getCounter(Counters.BYTES_WRITTEN).increment(keyWords.getLength() + valueWords.getLength());
-            context.getCounter(Counters.RECORDS_WRITTEN).increment(1);
-            if (++itemCount % 200 == 0) {
-                context.setStatus(String.format("Wrote record %d . %d bytes left", itemCount, numBytesToWrite));
-            }
-
-        }
-
-    }*/
-
-    /**
-     * Given an output filename, write a bunch of random records to it.
-     *
-     * @param key
-     * @param value
-     * @param context
-     */
-    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        List<String> words = listOfWords(value);
-        int itemCount = 0;
-        while (numBytesToWrite > 0) {
-            //Text valueWords = new Text(words.get(random.nextInt(words.size())));
-            int key_word = minWordsInKey + (wordsInKeyRange != 0 ? random.nextInt(wordsInKeyRange) : 0);
-            int value_word = minWordsInValue + (wordsInValueRange != 0 ? random.nextInt(wordsInValueRange) : 0);
-            Text keyWords = generateSentence(key_word, words);
-            Text valueWords = generateSentence(value_word, words);
-            context.write(new Text(), valueWords);
-            numBytesToWrite -= (valueWords.getLength());
-            // Update counters, progress etc.
-            context.getCounter(Counters.BYTES_WRITTEN).increment(valueWords.getLength());
-            context.getCounter(Counters.RECORDS_WRITTEN).increment(1);
-            if (++itemCount % 200 == 0) {
-                context.setStatus(String.format("Wrote record %d . %d bytes left", itemCount, numBytesToWrite));
-            }
-        }
-    }
-
-    private List<String> listOfWords(Text value) {
-        List<String> strings = new ArrayList<String>();
-        //for(String line : value.toString()) {
-        strings.add(value.toString());
-        //}
-        return strings;
-    }
-
-    /**
-     * @param wordsNumbers
-     * @return a new sentence
-     */
-
-    private Text generateSentence(int wordsNumbers, List<String> list) {
-        StringBuffer sentence = new StringBuffer();
-        String space = " ";
-
-        for (int i = 0; i < wordsNumbers; i++) {
-            sentence.append(list.get(random.nextInt(list.size())));
-            sentence.append(space);
-        }
-        return new Text(sentence.toString());
-    }
-
 }
-
-
-
-
-
-
-
-
