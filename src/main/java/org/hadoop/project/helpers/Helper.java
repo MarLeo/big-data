@@ -1,4 +1,4 @@
-package org.hadoop.project.Helpers;
+package org.hadoop.project.helpers;
 
 import org.apache.hadoop.io.Text;
 

@@ -10,8 +10,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.hadoop.project.Helpers.RandomInputFormat;
-import org.hadoop.project.Mapper.RandomTextMapper;
+import org.hadoop.project.helpers.RandomInputFormat;
+import org.hadoop.project.mapper.RandomTextMapper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package org.hadoop.project.Counters;
+package org.hadoop.project.counters;
 
 /**
  * Created by marti on 22/01/2017.

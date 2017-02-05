@@ -1,12 +1,12 @@
-package org.hadoop.project.Mapper;
+package org.hadoop.project.mapper;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
-import org.hadoop.project.Counters.Counters;
-import org.hadoop.project.Helpers.Helper;
+import org.hadoop.project.counters.Counters;
+import org.hadoop.project.helpers.Helper;
 
 import java.io.IOException;
 import java.util.Random;
