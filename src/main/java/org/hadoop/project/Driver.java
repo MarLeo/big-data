@@ -43,10 +43,13 @@ public class Driver extends Configured implements Tool {
             return printUsage();
         }
 
+        // Input Path
+        //Path inPath = new Path ( args[0] );
+
         // Output Path
         Path outputDir = new Path ( args[0] );
 
-        int numMaps = 10;
+        int numMaps = Integer.parseInt ( args[1] )/*10*/;
 
         // Create configuration
         Configuration conf = getConf();
@@ -88,6 +91,8 @@ public class Driver extends Configured implements Tool {
             }
         }
 
+        // Input
+        //FileInputFormat.addInputPath ( job, inPath );
 
         // Output
         FileOutputFormat.setOutputPath ( job, outputDir );

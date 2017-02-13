@@ -2,28 +2,48 @@ package org.hadoop.project.helpers;
 
 import org.apache.hadoop.io.Text;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 /**
  * Created by marti on 04/02/2017.
  */
 public class Helper {
+    private static List<String> list;
+    private static String token = "";
 
 
-    public static Text generateSentence(int noWords, Random random) {
+    public static Text generateSentence(int noWords, Random random, List<String> words) {
         StringBuffer sentence = new StringBuffer ();
         String space = " ";
         for (int i = 0; i < noWords; ++i) {
-            sentence.append ( words[random.nextInt ( words.length )] );
+            sentence.append ( words.get ( random.nextInt ( words.size () ) ) );
             sentence.append ( space );
         }
         return new Text ( sentence.toString () );
     }
 
 
-    /**
-     * A random list of 100 words from /usr/share/dict/words
-     */
+    public static List<String> readFile() throws FileNotFoundException {
+        List<String> list = new ArrayList<String> ();
+        Scanner file = new Scanner ( new File ( "/home/cluster/user04/input.txt" ) ).useDelimiter ( " \\s*" );
+        while (file.hasNext ()) {
+            token = file.next ();
+            list.add ( token );
+        }
+        file.close ();
+        //words = list.toArray ( new String[0] );
+        return list;
+    }
+
+
+
+/*
+
     private static String[] words = {
             "diurnalness", "Homoiousian",
             "spiranthic", "tetragynian",
@@ -526,5 +546,6 @@ public class Helper {
             "unpatched", "hypochondriacism",
             "critically", "cheesecutter",
     };
+    */
 
 }
