@@ -15,11 +15,17 @@ public class PairsMapper extends Mapper<LongWritable, Text, WordPair, IntWritabl
 
     private WordPair wordPair = new WordPair ();
     private IntWritable ONE = new IntWritable ( 1 );
+    private int neighbors = 2;
+
+
+    @Override
+    public void setup(Context context) {
+        neighbors = context.getConfiguration ().getInt ( "neighbors", 2 );
+    }
 
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        int neighbors = context.getConfiguration ().getInt ( "voisins", 2 );
         String[] tokens = value.toString ().split ( "\\s+" );
         if (tokens.length > 1) {
             for (int i = 0; i < tokens.length; i++) {

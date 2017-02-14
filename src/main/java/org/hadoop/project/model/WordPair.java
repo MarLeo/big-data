@@ -15,6 +15,7 @@ public class WordPair implements Writable, WritableComparable<WordPair> {
 
     private Text word;
     private Text neighbor;
+    private String delimiter = " ";
 
     public WordPair(Text word, Text neighbor) {
         this.word = word;
@@ -29,6 +30,7 @@ public class WordPair implements Writable, WritableComparable<WordPair> {
         this.word = new Text ();
         this.neighbor = new Text ();
     }
+
 
     public int compareTo(WordPair wordPair) {
         int ret = this.word.compareTo ( wordPair.getWord () );
@@ -77,6 +79,10 @@ public class WordPair implements Writable, WritableComparable<WordPair> {
         this.neighbor = neighbor;
     }
 
+    public void setDelimiter(String delimiter) {
+        this.delimiter = delimiter;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -87,6 +93,7 @@ public class WordPair implements Writable, WritableComparable<WordPair> {
         if (!getWord ().equals ( wordPair.getWord () )) return false;
         return getNeighbor ().equals ( wordPair.getNeighbor () );
     }
+
 
     @Override
     public int hashCode() {

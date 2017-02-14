@@ -11,7 +11,7 @@ import java.io.IOException;
  */
 public class PairsReducer extends Reducer<WordPair, IntWritable, WordPair, IntWritable> {
 
-    //private IntWritable total = new IntWritable (  );
+    private IntWritable total = new IntWritable ();
 
 
     @Override
@@ -20,7 +20,8 @@ public class PairsReducer extends Reducer<WordPair, IntWritable, WordPair, IntWr
         for (IntWritable value : values) {
             count += value.get ();
         }
-        context.write ( key, new IntWritable ( count ) );
+        total.set ( count );
+        context.write ( key, total );
     }
 
 

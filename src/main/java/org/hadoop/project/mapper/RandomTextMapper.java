@@ -19,7 +19,7 @@ import java.util.Random;
  */
 public class RandomTextMapper extends MapReduceBase implements Mapper<Text, Text, Text, Text> {
 
-    private long numBytesToWrite = (long) (15 * Math.pow ( 1024, 2 ));
+    private long numBytesToWrite = (long) (30 * Math.pow ( 1024, 2 ));
     private int minWordsInKey = 5;
     private int wordsinKeyRange = 10 - minWordsInKey;
     private int minWordsInValue = 10;

@@ -2,52 +2,55 @@ package org.hadoop.project.mapper;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.hadoop.project.helpers.CustomMapWritable;
 
 import java.io.IOException;
 
 /**
  * Created by marti on 05/02/2017.
  */
-public class StripesMapper extends Mapper<LongWritable, Text, Text, MapWritable> {
+public class StripesMapper extends Mapper<LongWritable, Text, Text, CustomMapWritable> {
 
-    private MapWritable neighborsOccurence = new MapWritable ();
+    private CustomMapWritable occurences = new CustomMapWritable ();
     private Text word = new Text ();
+    private int neighbors = 2;
 
 
-    /**
-     * @param key
-     * @param value
-     * @param context
-     * @throws IOException
-     * @throws InterruptedException
-     */
+    @Override
+    public void setup(Context context) {
+        neighbors = context.getConfiguration ().getInt ( "neighbors", 2 );
+    }
+
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        int neighbors = context.getConfiguration ().getInt ( "voisins", 2 );
+        //int voisins = context.getConfiguration ().getInt ( "voisins", 2 );
         String[] tokens = value.toString ().split ( "\\s+" );
         if (tokens.length > 1) {
             for (int i = 0; i < tokens.length; i++) {
                 word.set ( tokens[i] );
-                neighborsOccurence.clear ();
+                occurences.clear ();
 
 
                 int start = (i - neighbors < 0) ? 0 : i - neighbors;
                 int end = (i + neighbors >= tokens.length) ? tokens.length - 1 : i + neighbors;
                 for (int j = start; j <= end; j++) {
                     if (j == i) continue;
+
+                    // skip empty tokens
+                    if (tokens[j].length () == 0)
+                        continue;
                     Text neighbor = new Text ( tokens[j] );
-                    if (neighborsOccurence.containsKey ( neighbor )) {
-                        IntWritable occurences = (IntWritable) neighborsOccurence.get ( neighbor );
-                        occurences.set ( occurences.get () + 1 );
+                    if (occurences.containsKey ( neighbor )) {
+                        IntWritable count = (IntWritable) occurences.get ( neighbor );
+                        count.set ( count.get () + 1 );
                     } else {
-                        neighborsOccurence.put ( neighbor, new IntWritable ( 1 ) );
+                        occurences.put ( neighbor, new IntWritable ( 1 ) );
                     }
                 }
 
-                context.write ( word, neighborsOccurence );
+                context.write ( word, occurences );
 
             }
         }

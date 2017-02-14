@@ -10,6 +10,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.hadoop.project.mapper.PairsMapper;
@@ -24,10 +25,10 @@ import java.util.Date;
  * Created by marti on 05/02/2017.
  */
 public class PairsDriver extends Configured implements Tool {
+    private static final Logger LOGGER = LogManager.getLogger ( PairsDriver.class );
 
 
     public static void main(String[] args) throws Exception {
-        final Logger LOGGER = LogManager.getLogger ( PairsDriver.class );
         LOGGER.info ( String.format ( "Lauching %s at %s", PairsDriver.class.getSimpleName (), new SimpleDateFormat ( "dd/MM/yyyy HH:mm:ss" ).format ( Calendar.getInstance ().getTime () ) ) );
         int exitCode = ToolRunner.run ( new Configuration (), new PairsDriver (), args );
         System.exit ( exitCode );
@@ -36,7 +37,7 @@ public class PairsDriver extends Configured implements Tool {
 
     public int run(String[] args) throws Exception {
 
-        if (args.length == 0) {
+        if (args.length != 4) {
             return printUsage ();
         }
 
@@ -46,15 +47,31 @@ public class PairsDriver extends Configured implements Tool {
         // Output Path
         Path outPath = new Path ( args[1] );
 
+        // neighbors
+        int neighbors = Integer.parseInt ( args[2] );
+
+        // set reducers
+        int reduceTasks = Integer.parseInt ( args[3] );
+
+        LOGGER.log ( Level.INFO, String.format ( "Tool : Running co-occurence matrix pairs" ) );
+        LOGGER.log ( Level.INFO, String.format ( "Input Path : %s", inPath.toString () ) );
+        LOGGER.log ( Level.INFO, String.format ( "Output Path : %s", outPath.toString () ) );
+        LOGGER.log ( Level.INFO, String.format ( "Neighbors : %d", neighbors ) );
+        LOGGER.log ( Level.INFO, String.format ( "Number of reducers : %d", reduceTasks ) );
+
+
         // Create Configuration
         Configuration conf = new Configuration ();
 
         // Create Job
         Job job = new Job ( conf );
         job.setJarByClass ( PairsDriver.class );
+        job.getConfiguration ().setInt ( "neighbors", neighbors );
         job.setJobName ( "Pairs co-occurence driver" );
 
         // Setup output
+        job.setMapOutputKeyClass ( WordPair.class );
+        job.setMapOutputValueClass ( IntWritable.class );
         job.setOutputKeyClass ( WordPair.class );
         job.setOutputValueClass ( IntWritable.class );
 
@@ -63,7 +80,7 @@ public class PairsDriver extends Configured implements Tool {
 
         // Setup reducer
         job.setReducerClass ( PairsReducer.class );
-
+        job.setNumReduceTasks ( reduceTasks );
 
         // Setup Combiner
         job.setCombinerClass ( PairsReducer.class );
@@ -91,7 +108,7 @@ public class PairsDriver extends Configured implements Tool {
     }
 
     static int printUsage() {
-        System.out.println ( String.format ( "word co-occurences [-outputFormat <output format class>] <output>" ) );
+        System.out.println ( String.format ( "usage : <input-path> <output path> <neighbors> <num-reducers>" ) );
         ToolRunner.printGenericCommandUsage ( System.out );
         return 2;
     }

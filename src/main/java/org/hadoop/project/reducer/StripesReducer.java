@@ -5,6 +5,7 @@ import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.hadoop.project.helpers.CustomMapWritable;
 
 import java.io.IOException;
 import java.util.Set;
@@ -12,21 +13,21 @@ import java.util.Set;
 /**
  * Created by marti on 05/02/2017.
  */
-public class StripesReducer extends Reducer<Text, MapWritable, Text, MapWritable> {
+public class StripesReducer extends Reducer<Text, MapWritable, Text, CustomMapWritable> {
 
-    private MapWritable occurences = new MapWritable ();
+    private CustomMapWritable occurences = new CustomMapWritable ();
 
-    @Override
-    protected void reduce(Text key, Iterable<MapWritable> values, Context context) throws IOException, InterruptedException {
+
+    protected void reduce(Text key, Iterable<CustomMapWritable> values, Context context) throws IOException, InterruptedException {
         occurences.clear ();
-        for (MapWritable value : values) {
+        for (CustomMapWritable value : values) {
             addOccurences ( value );
         }
         context.write ( key, occurences );
     }
 
 
-    private void addOccurences(MapWritable value) {
+    private void addOccurences(CustomMapWritable value) {
         Set<Writable> keys = value.keySet ();
         for (Writable key : keys) {
             IntWritable itemCount = (IntWritable) value.get ( key );
