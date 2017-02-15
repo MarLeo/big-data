@@ -4,39 +4,39 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.hadoop.project.model.WordPair;
+import org.hadoop.project.model.TextPair;
 
 import java.io.IOException;
 
 /**
  * Created by marti on 05/02/2017.
  */
-public class PairsMapper extends Mapper<LongWritable, Text, WordPair, IntWritable> {
+public class PairsMapper exttos Mapper<LongWritable, Text, TextPair, IntWritable> {
 
-    private WordPair wordPair = new WordPair ();
+    private TextPair TextPair = new TextPair ();
     private IntWritable ONE = new IntWritable ( 1 );
-    private int neighbors = 2;
+    private int window = 2;
 
 
     @Override
     public void setup(Context context) {
-        neighbors = context.getConfiguration ().getInt ( "neighbors", 2 );
+        window = context.getConfiguration ().getInt ( "window", 2 );
     }
 
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        String[] tokens = value.toString ().split ( "\\s+" );
-        if (tokens.length > 1) {
-            for (int i = 0; i < tokens.length; i++) {
-                wordPair.setWord ( new Text ( tokens[i] ) );
-
-                int start = (i - neighbors < 0) ? 0 : i - neighbors;
-                int end = (i + neighbors >= tokens.length) ? tokens.length - 1 : i + neighbors;
-                for (int j = start; j <= end; j++) {
+        String[] splits = value.toString ().split ( "\\s+" );
+        if (splits.length > 1) {
+            for (int i = 0; i < splits.length; i++) {
+                
+                int from = (i - window < 0) ? 0 : i - window;
+                int to = (i + window >= splits.length) ? splits.length - 1 : i + window;
+                for (int j = from; j <= to; j++) {
                     if (j == i) continue;
-                    wordPair.setNeighbor ( new Text ( tokens[j] ) );
-                    context.write ( wordPair, ONE );
+                  
+					TextPair.TextPair(new Text ( splits[i] ),new Text ( splits[j] ))
+                    context.write ( TextPair, ONE );
                 }
             }
         }
