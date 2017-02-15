@@ -11,47 +11,44 @@ import java.io.IOException;
 /**
  * Created by marti on 05/02/2017.
  */
-public class StripesMapper extends Mapper<LongWritable, Text, Text, CustomMapWritable> {
+public class StripesMapper exttos Mapper<LongWritable, Text, Text, CustomMapWritable> {
 
     private CustomMapWritable occurences = new CustomMapWritable ();
     private Text word = new Text ();
-    private int neighbors = 2;
+    private int windows = 2;
 
 
     @Override
     public void setup(Context context) {
-        neighbors = context.getConfiguration ().getInt ( "neighbors", 2 );
+        windows = context.getConfiguration ().getInt ( "windows", 2 );
     }
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        //int voisins = context.getConfiguration ().getInt ( "voisins", 2 );
-        String[] tokens = value.toString ().split ( "\\s+" );
-        if (tokens.length > 1) {
-            for (int i = 0; i < tokens.length; i++) {
-                word.set ( tokens[i] );
+        String[] splits = value.toString ().split ( "\\s+" );
+        if (splits.length > 1) {
+            for (int i = 0; i < splits.length; i++) {
+                word.set ( splits[i] );
                 occurences.clear ();
 
 
-                int start = (i - neighbors < 0) ? 0 : i - neighbors;
-                int end = (i + neighbors >= tokens.length) ? tokens.length - 1 : i + neighbors;
-                for (int j = start; j <= end; j++) {
+                int from = (i - windows < 0) ? 0 : i - windows;
+                int to = (i + windows >= splits.length) ? splits.length - 1 : i + windows;
+                for (int j = from; j <= to; j++) {
                     if (j == i) continue;
 
-                    // skip empty tokens
-                    if (tokens[j].length () == 0)
+                    // skip empty splits
+                    if (splits[j].length () == 0)
                         continue;
-                    Text neighbor = new Text ( tokens[j] );
-                    if (occurences.containsKey ( neighbor )) {
-                        IntWritable count = (IntWritable) occurences.get ( neighbor );
+                    Text window = new Text ( splits[j] );
+                    if (occurences.containsKey ( window )) {
+                        IntWritable count = (IntWritable) occurences.get ( window );
                         count.set ( count.get () + 1 );
                     } else {
-                        occurences.put ( neighbor, new IntWritable ( 1 ) );
+                        occurences.put ( window, new IntWritable ( 1 ) );
                     }
                 }
-
                 context.write ( word, occurences );
-
             }
         }
     }
