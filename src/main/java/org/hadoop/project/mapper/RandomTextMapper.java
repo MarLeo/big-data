@@ -20,10 +20,10 @@ import java.util.Random;
 public class RandomTextMapper extends MapReduceBase implements Mapper<Text, Text, Text, Text> {
 
     private long numBytesToWrite = (long) (30 * Math.pow ( 1024, 2 ));
-    private int minWordsInKey = 5;
-    private int wordsinKeyRange = 10 - minWordsInKey;
-    private int minWordsInValue = 10;
-    private int wordsInValueRange = 100 - minWordsInValue;
+    private int minRepetitionsKey = 5;
+    private int minRepetitionsKeyValue = 10 - minRepetitionsKey;
+    private int minRepetitionsValue = 10;
+    private int minValuesInText = 100 - minRepetitionsValue;
     private Random random = new Random ();
     List<String> words = new ArrayList<String> ( Helper.readFile () );
 
@@ -37,8 +37,8 @@ public class RandomTextMapper extends MapReduceBase implements Mapper<Text, Text
         int items = 0;
         while (numBytesToWrite > 0) {
             // Generate the key/value
-            int numWordsKey = minWordsInKey + (wordsinKeyRange != 0 ? random.nextInt ( wordsinKeyRange ) : 0);
-            int numWordsValue = minWordsInValue + (wordsInValueRange != 0 ? random.nextInt ( wordsInValueRange ) : 0);
+            int numWordsKey = minRepetitionsKey + (minRepetitionsKeyValue != 0 ? random.nextInt ( minRepetitionsKeyValue ) : 0);
+            int numWordsValue = minRepetitionsValue + (minValuesInText != 0 ? random.nextInt ( minValuesInText ) : 0);
             Text keyWords = Helper.generateSentence ( numWordsKey, random, words );
             Text valueWords = Helper.generateSentence ( numWordsValue, random, words );
 
