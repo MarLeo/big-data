@@ -11,38 +11,38 @@ import java.io.IOException;
 /**
  * Created by marti on 05/02/2017.
  */
-public class WordPair implements Writable, WritableComparable<WordPair> {
+public class TextPair implements Writable, WritableComparable<TextPair> {
 
     private Text word;
     private Text neighbor;
     private String delimiter = " ";
 
-    public WordPair(Text word, Text neighbor) {
+    public TextPair(Text word, Text neighbor) {
         this.word = word;
         this.neighbor = neighbor;
     }
 
-    public WordPair(String word, String neighbor) {
+    public TextPair(String word, String neighbor) {
         this ( new Text ( word ), new Text ( neighbor ) );
     }
 
-    public WordPair() {
+    public TextPair() {
         this.word = new Text ();
         this.neighbor = new Text ();
     }
 
 
-    public int compareTo(WordPair wordPair) {
-        int ret = this.word.compareTo ( wordPair.getWord () );
+    public int compareTo(TextPair TextPair) {
+        int ret = this.word.compareTo ( TextPair.getWord () );
         if (ret != 0) {
             return ret;
         }
         if (this.neighbor.toString ().equals ( "*" )) {
             return -1;
-        } else if (wordPair.getNeighbor ().equals ( "*" )) {
+        } else if (TextPair.getNeighbor ().equals ( "*" )) {
             return 1;
         }
-        return this.neighbor.compareTo ( wordPair.getNeighbor () );
+        return this.neighbor.compareTo ( TextPair.getNeighbor () );
     }
 
     public void write(DataOutput dataOutput) throws IOException {
@@ -56,10 +56,10 @@ public class WordPair implements Writable, WritableComparable<WordPair> {
         neighbor.readFields ( dataInput );
     }
 
-    public static WordPair read(DataInput dataInput) throws IOException {
-        WordPair wordPair = new WordPair ();
-        wordPair.readFields ( dataInput );
-        return wordPair;
+    public static TextPair read(DataInput dataInput) throws IOException {
+        TextPair TextPair = new TextPair ();
+        TextPair.readFields ( dataInput );
+        return TextPair;
     }
 
 
@@ -86,12 +86,12 @@ public class WordPair implements Writable, WritableComparable<WordPair> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof WordPair)) return false;
+        if (!(o instanceof TextPair)) return false;
 
-        WordPair wordPair = (WordPair) o;
+        TextPair TextPair = (TextPair) o;
 
-        if (!getWord ().equals ( wordPair.getWord () )) return false;
-        return getNeighbor ().equals ( wordPair.getNeighbor () );
+        if (!getWord ().equals ( TextPair.getWord () )) return false;
+        return getNeighbor ().equals ( TextPair.getNeighbor () );
     }
 
 
