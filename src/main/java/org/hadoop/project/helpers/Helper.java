@@ -1,6 +1,7 @@
 package org.hadoop.project.helpers;
 
 import org.apache.hadoop.io.Text;
+import org.hadoop.project.helpers.CustomMapWritable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,6 +40,20 @@ public class Helper {
         //words = list.toArray ( new String[0] );
         return list;
     }
+    
+     private void addOccurences(CustomMapWritable value) {
+        Set<Writable> keys = value.keySet ();
+        for (Writable key : keys) {
+            IntWritable itemCount = (IntWritable) value.get ( key );
+            if (occurences.containsKey ( key )) {
+                IntWritable count = (IntWritable) occurences.get ( key );
+                count.set ( itemCount.get () + count.get () );
+            } else {
+                occurences.put ( key, itemCount );
+            }
+        }
+    }
+
 
 
 
