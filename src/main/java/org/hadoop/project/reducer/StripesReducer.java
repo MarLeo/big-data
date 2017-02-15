@@ -21,24 +21,8 @@ public class StripesReducer extends Reducer<Text, MapWritable, Text, CustomMapWr
     protected void reduce(Text key, Iterable<CustomMapWritable> values, Context context) throws IOException, InterruptedException {
         occurences.clear ();
         for (CustomMapWritable value : values) {
-            addOccurences ( value );
+            Helper.addOccurences ( value );
         }
         context.write ( key, occurences );
     }
-
-
-    private void addOccurences(CustomMapWritable value) {
-        Set<Writable> keys = value.keySet ();
-        for (Writable key : keys) {
-            IntWritable itemCount = (IntWritable) value.get ( key );
-            if (occurences.containsKey ( key )) {
-                IntWritable count = (IntWritable) occurences.get ( key );
-                count.set ( itemCount.get () + count.get () );
-            } else {
-                occurences.put ( key, itemCount );
-            }
-        }
-    }
-
-
 }
