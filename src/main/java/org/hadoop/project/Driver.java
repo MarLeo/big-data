@@ -33,7 +33,8 @@ public class Driver extends Configured implements Tool {
 
     public static void main(String[] args) throws Exception {
         final Logger LOGGER = LogManager.getLogger(Driver.class);
-        LOGGER.info(String.format("Lauching %s at %s", Driver.class.getSimpleName(), new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime())));
+        LOGGER.info(String.format("Lauching %s at %s", Driver.class.getSimpleName(), new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+                           .format(Calendar.getInstance().getTime())));
         int exitCode = ToolRunner.run(new Configuration(), new Driver(), args);
         System.exit(exitCode);
     }
